@@ -39,7 +39,7 @@ def get_last_visitor():
         return None, None
     except Exception as e:
         return None, None
-    
+    pass
 
 def add_visitor(visitor_name):
     if not visitor_name:
@@ -49,6 +49,17 @@ def add_visitor(visitor_name):
 
     if last_name is not None and last_name == visitor_name:
         raise DuplicateVisitorError(f"{visitor_name} is the last visitor logged")
+    # """Rule 2: check 5 - minuites wait time between differnt visitor"""
+    if last_timestamp is not None:
+        current_seconds = current_time.timestamp()
+        last_seconds = last_timestamp.timestamp()
+        seconds_diff = current_seconds - last_seconds
+
+        if seconds_diff < 5 * 60:
+            remaining_seconds = int(5 * 60 - seconds_diff)
+            minutes = remaining_seconds // 60
+            seconds = remaining_seconds % 60
+            raise EarlyEntryError(f"please wait {minutes}m {seconds}s before logging another visitor.")
     with open(FILENAME, 'a') as f:
         timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
         f.write(f"{timestamp_str} - {visitor_name}\n")
