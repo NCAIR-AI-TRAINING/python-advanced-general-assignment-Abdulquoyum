@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime,timedelta
 import os
 
 class DuplicateVisitorError(Exception):
@@ -16,6 +16,7 @@ def ensure_file():
             pass
 
 def get_last_visitor():
+    ensure_file()
     try:
         with open(FILENAME, 'r') as f:
             lines = f.readlines()
@@ -30,18 +31,19 @@ def get_last_visitor():
         if not last_line:
             return None, None
         
-        parts = last_line.split('-', 1)
+        parts = last_line.split('|', 1)
         if len(parts) == 2:
-            timestamp_str = parts[0]
-            name = parts[1]
-            timestamp = datetime. strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+            name = parts[0]
+            timestamp_str = parts[1]
+            timestamp = datetime.fromisoformat(timestamp_str, "%Y-%m-%d %H:%M:%S")
             return name, timestamp
         return None, None
-    except Exception as e:
+    except Exception:
         return None, None
     pass
 
 def add_visitor(visitor_name):
+    ensure_file()
     if not visitor_name:
         raise ValueError("Visitor name cannot be empty")
     last_name, last_timestamp = get_last_visitor()
@@ -51,19 +53,19 @@ def add_visitor(visitor_name):
         raise DuplicateVisitorError(f"{visitor_name} is the last visitor logged")
     # """Rule 2: check 5 - minuites wait time between differnt visitor"""
     if last_timestamp is not None:
-        current_seconds = current_time.timestamp()
-        last_seconds = last_timestamp.timestamp()
-        seconds_diff = current_seconds - last_seconds
+        time_diff = current_time - last_timestamp
+        required_wait = timedelta(minutes=5)
+        
 
-        if seconds_diff < 5 * 60:
-            remaining_seconds = int(5 * 60 - seconds_diff)
-            minutes = remaining_seconds // 60
-            seconds = remaining_seconds % 60
+        if time_diff < required_wait:
+            remaining = required_wait - time_diff
+            minutes = int(remaining.total_seconds() // 60)
+            seconds = (remaining.total_seconds() % 60)
             raise EarlyEntryError(f"please wait {minutes}m {seconds}s before logging another visitor.")
     with open(FILENAME, 'a') as f:
-        timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
-        f.write(f"{timestamp_str} - {visitor_name}\n")
-    
+        timestamp_str = current_time.isoformat()
+        f.write(f"{timestamp_str} | {visitor_name}\n")
+
     pass
 
 def main():
