@@ -34,7 +34,7 @@ def get_last_visitor():
         if len(parts) == 2:
             timestamp_str = parts[0]
             name = parts[1]
-            timestamp = datetime. strftime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+            timestamp = datetime. strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
             return name, timestamp
         return None, None
     except Exception as e:
